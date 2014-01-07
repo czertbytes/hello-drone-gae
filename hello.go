@@ -32,5 +32,5 @@ func init() {
 }
 
 func hello(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *HelloResponse, error) {
-    return http.StatusOK, nil, &HelloResponse{"Saki Saki Saki"}, nil
+    return http.StatusOK, nil, &HelloResponse{"Saki Saki Saki Saki"}, nil
 }

@@ -32,7 +32,7 @@ func TestHello(t *testing.T) {
         t.Fatal(code)
     }
 
-    if "Saki Saki Saki" != response.Message {
+    if "Saki Saki Saki Saki" != response.Message {
         t.Fatal(response)
     }
 }
