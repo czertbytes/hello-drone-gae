@@ -1,36 +1,56 @@
 package hello
 
 import (
-    "log"
-    "net/http"
-    "net/url"
+	"errors"
+	"fmt"
+	"log"
+	"net/http"
+	"net/url"
 
-    "github.com/rcrowley/go-tigertonic"
+	tt "github.com/rcrowley/go-tigertonic"
 )
 
 var (
-    mux, nsMux *tigertonic.TrieServeMux
+	mux, v1Mux *tt.TrieServeMux
 )
 
 type HelloResponse struct {
-    Message string `json:"message"`
+	Message string `json:"message"`
 }
 
 func init() {
-    log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
+	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 
-    cors := tigertonic.NewCORSBuilder().AddAllowedOrigins("*")
+	cors := tt.NewCORSBuilder().AddAllowedOrigins("*")
 
-    mux = tigertonic.NewTrieServeMux()
-    mux.Handle("GET", "/hello", cors.Build(tigertonic.Timed(tigertonic.Marshaled(hello), "hello", nil)))
+	v1Mux = tt.NewTrieServeMux()
+	v1Mux.Handle("GET", "/hello", cors.Build(tt.Timed(tt.Marshaled(hello), "hello", nil)))
+	v1Mux.Handle("GET", "/hello/{id}", cors.Build(tt.Timed(tt.Marshaled(helloParam), "helloParam", nil)))
+	v1Mux.Handle("GET", "/if-true", tt.If(testTrue, tt.Marshaled(ifHandler)))
+	v1Mux.Handle("GET", "/if-false", tt.If(testFalse, tt.Marshaled(ifHandler)))
 
-    nsMux = tigertonic.NewTrieServeMux()
-    nsMux.HandleNamespace("", mux)
-    nsMux.HandleNamespace("/1.0", mux)
+	mux = tt.NewTrieServeMux()
+	mux.HandleNamespace("/1.0", v1Mux)
 
-    http.Handle("/", nsMux)
+	http.Handle("/", mux)
 }
 
 func hello(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *HelloResponse, error) {
-    return http.StatusOK, nil, &HelloResponse{"Saki Saki Saki Saki"}, nil
+	return http.StatusOK, nil, &HelloResponse{"Hello Saki"}, nil
+}
+
+func helloParam(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *HelloResponse, error) {
+	return http.StatusOK, nil, &HelloResponse{fmt.Sprintf("Hello %s", u.Query().Get("id"))}, nil
+}
+
+func testTrue(r *http.Request) (http.Header, error) {
+	return nil, nil
+}
+
+func testFalse(r *http.Request) (http.Header, error) {
+	return nil, tt.InternalServerError{errors.New("internal server error")}
+}
+
+func ifHandler(u *url.URL, h http.Header, _ interface{}) (int, http.Header, *HelloResponse, error) {
+	return http.StatusOK, nil, &HelloResponse{"Saki"}, nil
 }
