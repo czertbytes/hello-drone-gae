@@ -1,0 +1,7 @@
+image: google/cloud-sdk
+env:
+  - GOPATH=/var/cache/drone
+  - GOROOT=/google-cloud-sdk/platform/google_appengine/goroot
+script:
+  - goapp test ./...
+
